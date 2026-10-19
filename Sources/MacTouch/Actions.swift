@@ -174,10 +174,16 @@ final class ActionRunner {
 
     // MARK: scroll
 
+    private var scrollRemainder = CGVector.zero
+
     private func scroll(dx: CGFloat, dy: CGFloat, at p: CGPoint, phase: Int64, momentum: Int64 = 0) {
         let sign: CGFloat = tuning.naturalScrolling ? 1 : -1
-        let sx = Int32((horizontalOnly ? dx : dx) * sign * CGFloat(tuning.scrollSpeed))
-        let sy = Int32(horizontalOnly ? 0 : dy * sign * CGFloat(tuning.scrollSpeed))
+        if phase == 1 { scrollRemainder = .zero }
+        // Accumulate sub-pixel movement so slow scrolling is not truncated away.
+        let fx = dx * sign * CGFloat(tuning.scrollSpeed) + scrollRemainder.dx
+        let fy = (horizontalOnly ? 0 : dy * sign * CGFloat(tuning.scrollSpeed)) + scrollRemainder.dy
+        let sx = Int32(fx.rounded(.towardZero)), sy = Int32(fy.rounded(.towardZero))
+        scrollRemainder = CGVector(dx: fx - CGFloat(sx), dy: fy - CGFloat(sy))
         guard let e = CGEvent(scrollWheelEvent2Source: source, units: .pixel, wheelCount: 2, wheel1: sy, wheel2: sx, wheel3: 0) else { return }
         e.location = p
         e.setIntegerValueField(.scrollWheelEventIsContinuous, value: 1)

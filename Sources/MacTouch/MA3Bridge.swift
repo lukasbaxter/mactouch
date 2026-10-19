@@ -164,8 +164,7 @@ final class MA3Bridge {
     -- MacTouch bridge for grandMA3 onPC (macOS). Reads touch events written by the MacTouch app and
     -- feeds them into onPC's own multi-touch engine through Touch(display, type, id, x, y).
     -- Start it with:  Plugin "MacTouch"      Stop it with:  SetGlobalVar? no: run it again (toggles).
-    local HOME = os.getenv and os.getenv("HOME") or ""
-    local DIR = HOME .. "/Library/Application Support/MacTouch/ma3/"
+    local DIR = "__MACTOUCH_DIR__/"
     local EVENTS = DIR .. "events.txt"
     local ALIVE = DIR .. "plugin.alive"
     local POLL = 0.01
@@ -251,7 +250,8 @@ final class MA3Bridge {
     static func installPlugin() -> String {
         do {
             try FileManager.default.createDirectory(at: pluginsDir, withIntermediateDirectories: true)
-            try pluginLua.write(to: pluginsDir.appendingPathComponent("MacTouch.lua"), atomically: true, encoding: .utf8)
+            let lua = pluginLua.replacingOccurrences(of: "__MACTOUCH_DIR__", with: dir.path)
+            try lua.write(to: pluginsDir.appendingPathComponent("MacTouch.lua"), atomically: true, encoding: .utf8)
             try pluginXML.write(to: pluginsDir.appendingPathComponent("MacTouch.xml"), atomically: true, encoding: .utf8)
             return "Installed to \(pluginsDir.path)"
         } catch { return "Install failed: \(error.localizedDescription)" }
